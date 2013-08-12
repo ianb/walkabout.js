@@ -158,6 +158,12 @@ one port to another (helpful sometimes when you need to proxy to a
 server running locally).
 
 
+License
+-------
+
+This is available under the
+[Mozilla Public License](http://mozilla.org/MPL/2.0/) or the GPL.
+
 To Do
 -----
 
