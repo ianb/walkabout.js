@@ -492,7 +492,7 @@ if (Walkabout.jQueryAvailable) {
   };
 
   jQuery.fn.val.mock = function () {
-    if ((! Walkabout.inTesting) || this.attr("type") == "hidden") {
+    if ((! Walkabout.inTesting) || this.attr("type") == "hidden" || arguments.length) {
       return jQuery.fn.val.mock.orig.apply(this, arguments);
     }
     var options = this.attr("data-walkabout-options");
@@ -989,12 +989,23 @@ Walkabout.clickable = function (el) {
   return true;
 };
 
+Walkabout.metaElements = {
+  HTML: true,
+  HEAD: true,
+  SCRIPT: true,
+  LINK: true,
+  META: true
+};
+
 Walkabout.anyOverlap = function (overElement) {
   var overStyle;
+  if (Walkabout.metaElements[overElement.tagName] || overElement.nodeType != 1) {
+    return false;
+  }
   try {
     overStyle = getComputedStyle(overElement);
   } catch (e) {
-    console.warn("Could not getComputedStyle of", overElement);
+    console.warn("Could not getComputedStyle of", overElement, ": " + e);
   }
   if (! overStyle) {
     return false;
@@ -1629,7 +1640,18 @@ Walkabout.UI = Walkabout.Class({
   },
 
   addIssue: function () {
-    var div = this.make("div", {}, arguments);
+    var args = [];
+    for (var i=0; i<arguments.length; i++) {
+      var a = arguments[i];
+      if (typeof a == "string") {
+        args.push(a);
+      } else if (a === undefined) {
+        args.push("undefined");
+      } else {
+        args.push(JSON.stringify(a));
+      }
+    }
+    var div = this.make("div", {}, args);
     this.issues.appendChild(div);
     this.issues.childNodes[this.issues.childNodes.length - 1].scrollIntoView();
   },
@@ -1666,11 +1688,23 @@ Walkabout.UI = Walkabout.Class({
       }
       return false;
     }).bind(this);
+    var running = false;
     function bind(context, obj, prop, message) {
+      if (obj[prop] && obj[prop].orig) {
+        console.warn("Attempted to double-patch", obj, "." + prop);
+        return;
+      }
       var orig = obj[prop];
       obj[prop] = function () {
         var args = [message].concat(Array.prototype.slice.call(arguments, 0));
-        context.addIssue.apply(context, args);
+        if (! running) {
+          running = true;
+          try {
+            context.addIssue.apply(context, args);
+          } finally {
+            running = false;
+          }
+        }
         orig.apply(obj, arguments);
       };
       obj[prop].orig = orig;
@@ -1692,7 +1726,7 @@ Walkabout.makeBookmarklet = function () {
     }
   }
   if (! walkaboutSrc) {
-    return "javascript::alert('Could not find script.')";
+    return "javascript:alert('Could not find script.')";
   }
   // Cache bust on localhost
   var cacheBust = walkaboutSrc.indexOf("localhost") != -1;
