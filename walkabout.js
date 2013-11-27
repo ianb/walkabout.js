@@ -236,7 +236,6 @@ Walkabout.actionFinders.push(function findEdits(el, actions) {
   for (var i=-1; i<children.length; i++) {
     var e = i == -1 ? el : children[i];
     var attr = e.getAttribute && e.getAttribute("data-walkabout-edit-value");
-    console.log("checking", e, attr);
     if (attr) {
       var types = attr.split(/ /g);
       for (var j=0; j<types.length; j++) {
