@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-  if (typeof Walkabout == "undefined") {
+if (typeof Walkabout == "undefined") {
   if (typeof window == "undefined") {
     Walkabout = {};
   } else {
@@ -926,7 +926,7 @@ Walkabout.LinkFollower = Walkabout.Class({
     this.element = event.element;
     this.type = event.type;
     if (this.type != "click") {
-      throw "Unexpected event type: " + this.type;
+      throw new Error("Unexpected event type: " + this.type);
     }
     this.options = event.options || {};
   },
@@ -1057,7 +1057,7 @@ Walkabout.RandomStream = function RandomStream(newSeed) {
       value = parseInt(value, 10);
     }
     if ((! value) || isNaN(value)) {
-      throw "Bad seed: " + value;
+      throw new Error("Bad seed: " + value);
     }
     seed = value;
     x = (seed % 30268) + 1;
@@ -1168,7 +1168,7 @@ Walkabout.Actions.prototype.replaceAction = function (action, newAction) {
     }
   }
   if (! found) {
-    throw "Action not found: " + action;
+    throw new Error("Action not found: " + action);
   }
 };
 
@@ -1332,14 +1332,14 @@ Walkabout.rewriteListeners = function (code) {
     if (typeof require != "undefined") {
       exprima = require("esprima");
     } else {
-      throw "You must install or include esprima.js";
+      throw new Error("You must install or include esprima.js");
     }
   }
   if (typeof falafel == "undefined") {
     if (typeof require != "undefined") {
       falafel = require("falafel");
     } else {
-      throw "You must install or include falafel.js";
+      throw new Error("You must install or include falafel.js");
     }
   }
   var result = falafel(code, function (node) {
@@ -1379,7 +1379,7 @@ Walkabout.rewriteHtml = function (code, scriptLocation, extra) {
   var start, rest;
   extra = extra || "";
   if (scriptLocation.search(/[<>"]/) != -1) {
-    throw "Bad scriptLocation: " + scriptLocation;
+    throw new Error("Bad scriptLocation: " + scriptLocation);
   }
   var header = '<!--WALKABOUT--><scr' + 'ipt src="' + scriptLocation + '"></scr' + 'ipt>' +
     extra + '<!--/WALKABOUT-->';
@@ -1519,7 +1519,12 @@ Walkabout.UI = Walkabout.Class({
         if (typeof child == "string") {
           child = document.createTextNode(child);
         }
-        el.appendChild(child);
+        try {
+          el.appendChild(child);
+        } catch (e) {
+          console.warn("Attempted to add bad child:", child);
+          throw e;
+        }
       }
     }
     return el;
@@ -1644,7 +1649,9 @@ Walkabout.UI = Walkabout.Class({
       return result;
     } else {
       for (i=0; i<value.length; i++) {
-        if (value[i] == "Issues:") throw "Issues in serialization :(";
+        if (value[i] == "Issues:") {
+          throw new Error("Issues in serialization :(");
+        }
         this.addIssue(value[i]);
       }
       return value;
@@ -1686,7 +1693,7 @@ Walkabout.makeBookmarklet = function () {
     }
   }
   if (! walkaboutSrc) {
-    return "javascript:alert('Could not find script.')";
+    return "javascript::alert('Could not find script.')";
   }
   // Cache bust on localhost
   var cacheBust = walkaboutSrc.indexOf("localhost") != -1;
